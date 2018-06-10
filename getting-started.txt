@@ -1,0 +1,65 @@
+**** Put your access key and secret into index.html
+
+
+
+
+
+S3 Scheme:
+
+The title images meta
+s3://md-dev-title-processing/$sha256sum/title/$zipcontent/{something like ISBN}/images/black/file.png
+
+The title meta (like name of the book)
+s3://md-dev-title-processing/$sha256sum/title/$zipcontent/{something like ISBN}/{ISBN}.opf
+
+Markers?
+s3://md-dev-title-processing/$sha256sum/markers/$data
+
+
+
+Data for an actual image
+s3://md-dev-image-processing/$sha256sum/mathpix_output.json
+
+
+
+
+
+
+Test Locally:
+give processing/images buckets a CORS policy:
+  <?xml version="1.0" encoding="UTF-8"?>
+  <CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+    <CORSRule>
+      <AllowedOrigin>https://example.org</AllowedOrigin>
+      <AllowedMethod>HEAD</AllowedMethod>
+      <AllowedMethod>GET</AllowedMethod>
+      <AllowedMethod>PUT</AllowedMethod>
+      <AllowedMethod>POST</AllowedMethod>
+      <AllowedMethod>DELETE</AllowedMethod>
+      <AllowedHeader>*</AllowedHeader>
+      <ExposeHeader>ETag</ExposeHeader>
+      <ExposeHeader>x-amz-meta-custom-header</ExposeHeader>
+    </CORSRule>
+  </CORSConfiguration>
+
+launch a webserver:
+python -m SimpleHTTPServer
+
+visit:
+http://localhost:8000/list-books.html
+
+
+
+
+
+Setup Live Web:
+give images and processing buckets a nice CORS policy (see above)
+
+create a public bucket
+
+
+Sync my local files to the frontend bucket:
+aws s3 sync --acl=public-read . s3://md-dev-frontend/
+
+Visit website at:
+https://md-dev-frontend.s3.amazonaws.com/list-books.html

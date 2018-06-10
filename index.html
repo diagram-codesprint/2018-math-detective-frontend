@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>List Books</title>
+    <meta name="description" content="list books in database">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+    <link rel="icon" type="image/png" href="favicon.png" />
+    
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/main.css">
+    
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+    
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.254.1.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    
+    <script type="text/jsx">
+      AWS.config.update({accessKeyId: '', secretAccessKey: '', region: 'us-east-1'});
+      var s3 = new AWS.S3();
+
+      /* Label each image page
+      */
+      function labelEachImagePage(key) {
+        var keyParts = key.split("/");
+        var keysForThisOPF = key[0] + key[1];
+        
+        var params = {
+          Bucket: "md-dev-title-processing", 
+          MaxKeys: 3000,
+          Delimiter: '',
+          Prefix: keysForThisOPF 
+        };
+
+        s3.listObjectsV2(params).promise().then(
+          function(data) {
+            console.log(data);           // successful response  
+            
+            // grab images meta
+            // TODO any APIs to do this filtering serverside at AWS?
+            const opfKeys = data.Contents.filter(item => item.Key.endsWith('.png'));
+
+            // generate React list items for each Title
+             const listItems = opfKeys.map((item) =>
+               <li key={item.Key}>
+                <img className="book-cover-image" src="http://placekitten.com/200/266"/>
+                <button>Done</button>
+               </li>
+             );
+         
+             const element = (
+               <div>
+                 <a href="#" onClick={(e) => clickedHomeButton(e)}>home</a>
+                 <h1>Label each image</h1>
+                 <ol>{listItems}</ol>                    
+               </div>
+             );
+             ReactDOM.render(
+               element,
+               document.getElementById('root')
+             );     
+          },
+          function(err) {
+            console.log(err, err.stack); // an error occurred
+          }
+        );
+      }
+      
+      function selectTitlePage() {
+        var params = {
+          Bucket: "md-dev-title-processing", 
+          MaxKeys: 3000,
+          Delimiter: '',
+          Prefix: 'output/' 
+        };
+
+        s3.listObjectsV2(params).promise().then(
+          function(data) {
+            console.log(data);           // successful response  
+            
+            // grab opf keys (title meta)
+            // TODO any APIs to do this filtering serverside at AWS?
+            const opfKeys = data.Contents.filter(item => item.Key.endsWith('.opf'));
+            // const opfKeys = data.Contents;
+
+            // generate React list items for each Title
+             const listItems = opfKeys.map((item) =>
+               <li key={item.Key}>
+                <img className="book-cover-image" src="http://placekitten.com/200/266"/>
+                <div className="image-count-line">
+                  <span className="image-count">4629</span> images            
+                  <span className="static">(in progress)</span>            
+                </div>
+                <button id={item.Key} className="edit-continue" onClick={(e) => clickedEditButton(e)}>Start</button>
+                <h2>{item.Key}</h2>
+               </li>
+             );
+         
+             const element = (
+               <div>
+                 <h1>Select a title</h1>
+                 <ul>{listItems}</ul>                    
+               </div>
+             );
+             ReactDOM.render(
+               element,
+               document.getElementById('root')
+             );     
+          },
+          function(err) {
+            console.log(err, err.stack); // an error occurred
+          }
+        );
+      }    
+    
+      function clickedEditButton(e) {
+        e.preventDefault();
+        console.log('The link was clicked.');
+        console.log(e.target.id);
+        
+        labelEachImagePage(e.target.id);        
+      }
+      
+      function clickedHomeButton(e) {
+        e.preventDefault();
+        
+        selectTitlePage();                
+      }
+      
+      selectTitlePage();
+    </script>
+        
+    <!--
+      Note: this page is a great way to try React but it's not suitable for production.
+      It slowly compiles JSX with Babel in the browser and uses a large development build of React.
+
+      To set up a production-ready React build environment, follow these instructions:
+      * https://reactjs.org/docs/add-react-to-a-new-app.html
+      * https://reactjs.org/docs/add-react-to-an-existing-app.html
+
+      You can also use React without JSX, in which case you can remove Babel:
+      * https://reactjs.org/docs/react-without-jsx.html
+      * https://reactjs.org/docs/cdn-links.html
+    -->
+  </body>
+</html>
